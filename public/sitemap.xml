@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  
+  <!-- Ana Sayfa -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Hakkımızda -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/about</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- İletişim -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/contact</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Blog -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Blog Yazıları - Bilgi Kategorisi -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/istanbul-anadolu-yakasi-toptan-baklava-borek-14-ilce</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/istanbul-avrupa-yakasi-toptan-borek-baklava-25-ilce</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/istanbul-dugun-nisan-toptan-baklava-ozel-gunler</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/istanbul-cenaze-mevlid-toptan-borek-dini-organizasyon</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/istanbul-39-ilce-toptan-baklava-borek-teslimat</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Blog Yazıları - Profesyonel Kategori -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/istanbul-otel-restoran-toptan-baklava-borek-tedariki-profesyonel-catering</loc>
+    <lastmod>2024-12-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Blog Yazıları - Kültür Kategorisi -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/turk-mutfaginda-baklava-kulturu-osmanlidan-gunumuze</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/borek-gelenegi-cesitleri-anadoludan-istanbula</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Blog Yazıları - Tarif Kategorisi -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/geleneksel-cevizli-baklava-tarifi-ev-yapimi</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/su-boregi-yapmanin-sirlari-katman-katman</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://toptanbaklavaborek.com/blog/adana-boregi-tarifi-geleneksel-baharat-kariş</loc>
+    <lastmod>2024-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Sepet -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/cart</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Gizlilik Politikası -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/privacy</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <!-- Çerez Politikası -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/cookies</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <!-- İade Politikası -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/refund-policy</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <!-- Güvenlik Politikası -->
+  <url>
+    <loc>https://toptanbaklavaborek.com/security-policy</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+</urlset>

@@ -1,0 +1,511 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Line clamp utilities for mobile text truncation */
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2; /* Modern standard property */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3; /* Modern standard property */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Modern CSS Reset and Compatibility */
+@layer base {
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    color: #1f2937;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+  
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+  }
+  
+  h2 {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+  }
+  
+  h3 {
+    font-size: clamp(1.25rem, 3vw, 2rem);
+    font-weight: 600;
+  }
+  
+  p {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 400;
+    line-height: 1.7;
+  }
+  
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  
+  img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    image-rendering: optimize-contrast;
+  }
+  
+  input, button, textarea, select {
+    font: inherit;
+  }
+}
+
+/* Cross-browser backdrop-filter support */
+@layer components {
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+  }
+  
+  .backdrop-blur-lg {
+    backdrop-filter: blur(16px);
+  }
+  
+  .backdrop-blur {
+    backdrop-filter: blur(8px);
+  }
+  
+  /* Fallback for browsers without backdrop-filter support */
+  @supports not (backdrop-filter: blur(1px)) {
+    .backdrop-blur-sm,
+    .backdrop-blur-lg,
+    .backdrop-blur {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+/* Mobile navigation z-index fix */
+.mobile-nav-overlay {
+  z-index: 9990 !important;
+  pointer-events: auto !important;
+}
+
+.mobile-nav-panel {
+  z-index: 9995 !important;
+  pointer-events: auto !important;
+}
+
+.mobile-nav-panel a,
+.mobile-nav-panel button {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 9999 !important;
+  display: flex !important;
+  cursor: pointer !important;
+}
+
+.mobile-nav-panel nav {
+  z-index: 9998 !important;
+  position: relative;
+}
+
+.mobile-nav-panel nav button {
+  z-index: 9999 !important;
+  position: relative;
+  pointer-events: auto !important;
+}
+
+html, body, #__next {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+.container {
+  max-width: 1200px;
+}
+
+/* Performance optimized transitions */
+* {
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+/* Optimize layout performance */
+.optimize-layout {
+  contain: layout style paint;
+  will-change: transform;
+}
+
+/* Navbar scroll effect */
+@supports (backdrop-filter: blur(10px)) {
+  .backdrop-blur-sm {
+    backdrop-filter: blur(10px);
+  }
+}
+
+/* Mobile menu animations - Performance optimized */
+@keyframes slideDown {
+  from {
+    transform: translate3d(0, -10px, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate3d(0, 10px, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.2s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.2s ease-out;
+}
+
+/* Touch improvements for mobile */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Larger touch targets */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve touch handling for mobile nav */
+  .mobile-nav-panel a,
+  .mobile-nav-panel button {
+    touch-action: manipulation;
+    user-select: none;
+  }
+  
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Swipe gesture visual feedback - performance optimized */
+.swipe-hint {
+  position: relative;
+}
+
+.swipe-hint::after {
+  content: '👈';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 12px;
+  opacity: 0.7;
+  animation: pulseOpacity 2s infinite;
+}
+
+@keyframes pulseOpacity {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Button hover effects */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c2410c;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9a3412;
+}
+
+/* Screen reader only class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus styles for accessibility */
+.focus-ring:focus {
+  outline: 2px solid #c2410c;
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  
+  /* Desktop hover effects */
+  .desktop-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Desktop grid optimizations */
+  .desktop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .tablet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 767px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Mobile typography scaling */
+  .mobile-text-scale h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+  
+  .mobile-text-scale h2 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+  
+  .mobile-text-scale p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  /* Mobile spacing */
+  .mobile-spacing {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  /* Mobile cards */
+  .mobile-card {
+    margin-bottom: 1rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+}
+
+/* High DPI displays */
+@media (min-resolution: 192dpi) {
+  .crisp-edges {
+    image-rendering: optimize-contrast;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1f2937;
+    --text-primary: #f9fafb;
+    --accent: #f59e0b;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+  
+  a {
+    text-decoration: underline;
+  }
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Will-change hints for better performance */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Contain layout for better performance */
+.contain-layout {
+  contain: layout;
+}
+
+.contain-style {
+  contain: style;
+}
+
+/* Loading states */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Smooth scrolling for all elements */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Enhanced Cross-Browser Support */
+@layer utilities {
+  /* Text size adjust support - Removed for modern browser compatibility */
+  
+  /* Transform support */
+  .transform {
+    transform: translate3d(0, 0, 0);
+  }
+  
+  /* Gradient support */
+  .gradient-text {
+    background: linear-gradient(315deg, #f59e0b, #d97706);
+    background-clip: text;
+  }
+  
+  /* Box shadow support */
+  .shadow-custom {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Border radius support */
+  .rounded-custom {
+    border-radius: 0.5rem;
+  }
+  
+  /* Transition support */
+  .transition-custom {
+    transition: all 0.2s ease;
+  }
+  
+  /* User select support */
+  .select-none {
+    user-select: none;
+  }
+  
+  /* Appearance support */
+  .appearance-none {
+    appearance: none;
+  }
+  
+  /* Flexbox support */
+  .flex {
+    display: flex;
+  }
+  
+  .flex-center {
+    align-items: center;
+    justify-content: center;
+  }
+}

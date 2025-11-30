@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Arka plan -->
+  <rect width="64" height="64" fill="#FEF3C7" rx="8"/>
+  
+  <!-- Baklava ikonu (sol taraf) -->
+  <g transform="translate(8, 12)">
+    <!-- Baklava katmanları -->
+    <path d="M12 8 L20 4 L28 8 L20 12 Z" fill="#D97706" stroke="#92400E" stroke-width="1"/>
+    <path d="M12 12 L20 8 L28 12 L20 16 Z" fill="#F59E0B" stroke="#92400E" stroke-width="1"/>
+    <path d="M12 16 L20 12 L28 16 L20 20 Z" fill="#FCD34D" stroke="#92400E" stroke-width="1"/>
+    
+    <!-- Baklava üzerindeki noktalar (fındık/fıstık) -->
+    <circle cx="16" cy="10" r="0.6" fill="#92400E"/>
+    <circle cx="24" cy="10" r="0.6" fill="#92400E"/>
+    <circle cx="20" cy="14" r="0.6" fill="#92400E"/>
+    <circle cx="16" cy="18" r="0.6" fill="#92400E"/>
+    <circle cx="24" cy="18" r="0.6" fill="#92400E"/>
+  </g>
+  
+  <!-- Börek ikonu (sağ taraf) -->
+  <g transform="translate(36, 12)">
+    <!-- Börek spiral şekli -->
+    <path d="M16 16 A8 8 0 0 1 8 8 A8 8 0 0 1 16 0 A8 8 0 0 1 24 8 A8 8 0 0 1 16 16" 
+          fill="none" stroke="#92400E" stroke-width="3"/>
+    <path d="M12 12 A4 4 0 0 1 8 8 A4 4 0 0 1 12 4 A4 4 0 0 1 16 8 A4 4 0 0 1 12 12" 
+          fill="#F59E0B" stroke="#92400E" stroke-width="1"/>
+  </g>
+  
+  <!-- Ayırıcı çizgi -->
+  <path d="M8 40 L56 40" stroke="#92400E" stroke-width="2"/>
+  
+  <!-- BAKLAVA yazısı -->
+  <text x="32" y="52" font-family="serif" font-size="8" font-weight="bold" 
+        text-anchor="middle" fill="#92400E">BAKLAVA</text>
+</svg>
