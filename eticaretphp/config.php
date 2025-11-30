@@ -1,4 +1,5 @@
 <?php
+// Basit yapılandırma ve isteğe bağlı veritabanı bağlantısı
 $DB_HOST = getenv('DB_HOST') ?: 'localhost';
 $DB_NAME = getenv('DB_NAME') ?: 'ebadinam_eticaret';
 $DB_USER = getenv('DB_USER') ?: 'ebadinam_eticaret';
@@ -10,11 +11,10 @@ $options = [
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ];
 
+$pdo = null;
 try {
     $pdo = new PDO($dsn, $DB_USER, $DB_PASS, $options);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo "Veritabanına bağlanılamadı: " . htmlspecialchars($e->getMessage());
-    exit;
+    // Veritabanı bağlantısı isteğe bağlıdır; başarısız olursa JSON ayarları kullanılacaktır.
+    $pdo = null;
 }
-?>
