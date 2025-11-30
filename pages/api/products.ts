@@ -31,8 +31,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (data && data.length > 0) {
       res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=600')
       return res.status(200).json(
-        data.map((product) => ({
+        data.map((product: Product) => ({
           ...product,
+          id: String(product.id),
+          name: String(product.name),
+          description: String(product.description),
+          image: product.image ? String(product.image) : undefined,
+          images: Array.isArray(product.images) ? product.images.map((image) => String(image)) : [],
           price: typeof product.price === 'number' ? product.price : Number(product.price)
         }))
       )

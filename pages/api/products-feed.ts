@@ -2,12 +2,21 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import productsFallback from '../../data/products.json'
 import { getSupabaseServiceRoleClient } from '../../utils/supabaseClient'
 
+type Product = {
+  id: string
+  name: string
+  description: string
+  price: number
+  image: string
+  images: string[]
+}
+
 async function fetchProductsFromSupabase() {
   const supabase = getSupabaseServiceRoleClient()
 
   const { data, error } = await supabase
     .from('products')
-    .select('id, name, description, price, image')
+    .select('id, name, description, price, image, images')
     .order('id', { ascending: true })
 
   if (error) throw error
@@ -20,15 +29,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' })
   }
 
-  let products = productsFallback
+  let products: Product[] = productsFallback
 
   try {
     const supabaseProducts = await fetchProductsFromSupabase()
 
     if (supabaseProducts && supabaseProducts.length > 0) {
-      products = supabaseProducts.map((product) => ({
+      products = supabaseProducts.map((product: Product) => ({
         ...product,
-        price: typeof product.price === 'number' ? product.price : Number(product.price)
+        id: String(product.id),
+        name: String(product.name),
+        description: String(product.description),
+        image: String(product.image),
+        price: typeof product.price === 'number' ? product.price : Number(product.price),
+        images: Array.isArray(product.images) ? product.images.map((image) => String(image)) : []
       }))
     }
   } catch (error) {
