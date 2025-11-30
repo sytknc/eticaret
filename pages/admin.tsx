@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Layout from '../components/Layout'
+import type { AdminSettings, MenuItem } from '../types/admin'
 
 interface ProductRow {
   id: string
@@ -20,6 +21,7 @@ interface OrderRow {
   deliveryArea: string
   payment: 'kredi kartı' | 'kapıda ödeme' | 'havale'
 }
+
 
 const toneStyles: Record<string, { text: string; bg: string; ring: string; bar: string }> = {
   emerald: {
@@ -59,6 +61,11 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [settings, setSettings] = useState<AdminSettings | null>(null)
+  const [settingsMessage, setSettingsMessage] = useState<string | null>(null)
+  const [credentials, setCredentials] = useState({ email: 'sytkn@gmail.com', password: '' })
 
   const [connection, setConnection] = useState({
     host: 'db.gbupsyjaimsxfwtwvygb.supabase.co',
@@ -68,6 +75,13 @@ export default function AdminPage() {
     password: '••••••••',
     provider: 'postgresql'
   })
+
+  useEffect(() => {
+    const storedSession = typeof window !== 'undefined' ? localStorage.getItem('admin-session') : null
+    if (storedSession === 'active') {
+      setAuthenticated(true)
+    }
+  }, [])
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -168,6 +182,60 @@ export default function AdminPage() {
     loadDashboard()
   }, [])
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const localSettings = typeof window !== 'undefined' ? localStorage.getItem('admin-settings') : null
+        if (localSettings) {
+          setSettings(JSON.parse(localSettings))
+          return
+        }
+
+        const response = await fetch('/api/admin/settings')
+        if (!response.ok) {
+          throw new Error('Ayarlar yüklenemedi')
+        }
+        const data: AdminSettings = await response.json()
+        setSettings(data)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('admin-settings', JSON.stringify(data))
+        }
+      } catch (settingsError) {
+        console.error('Ayarlar çekilirken sorun oluştu', settingsError)
+        setSettings({
+          whatsapp: '+90 531 000 00 00',
+          supportPhone: '+90 212 123 45 67',
+          supportEmail: 'destek@toptanbaklavaborek.com',
+          infoBanner: { enabled: true, text: '39 ilçe aynı gün teslimat ve canlı WhatsApp desteği' },
+          hero: { title: 'Canlı Yönetilen Mağaza', subtitle: 'Tüm kanal ve menüleri tek ekran üzerinden güncelleyin.' },
+          topMenu: [
+            { label: 'Anasayfa', href: '/' },
+            { label: 'Hakkımızda', href: '/about' },
+            { label: 'Blog', href: '/blog' },
+            { label: 'İletişim', href: '/contact' }
+          ],
+          footerMenu: [
+            { label: 'Gizlilik', href: '/privacy' },
+            { label: 'İade Politikası', href: '/refund-policy' },
+            { label: 'Güvenlik', href: '/security-policy' }
+          ],
+          mobileMenu: [
+            { label: 'Sepet', href: '/cart' },
+            { label: 'Teslimat Bölgeleri', href: '/contact' },
+            { label: 'Kampanyalar', href: '/blog' }
+          ],
+          socialLinks: [
+            { platform: 'Instagram', url: 'https://instagram.com/toptanbaklavaborek' },
+            { platform: 'WhatsApp', url: 'https://wa.me/905310000000' }
+          ],
+          deployment: { live: true, maintenance: false, lastDeploy: 'Bugün 10:15', environment: 'Üretim' }
+        })
+      }
+    }
+
+    fetchSettings()
+  }, [])
+
   const profitability = useMemo(() => {
     const activeProducts = products.filter((product) => product.status === 'active')
     const averageMargin =
@@ -181,6 +249,54 @@ export default function AdminPage() {
       forecast
     }
   }, [products])
+
+  const persistSettings = (nextSettings: AdminSettings) => {
+    setSettings(nextSettings)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin-settings', JSON.stringify(nextSettings))
+    }
+    setSettingsMessage('Ayarlar canlı olarak güncellendi')
+    setTimeout(() => setSettingsMessage(null), 4000)
+  }
+
+  const updateMenuItem = (menuKey: 'topMenu' | 'footerMenu' | 'mobileMenu', index: number, field: keyof MenuItem, value: string) => {
+    if (!settings) return
+    const updatedMenu = settings[menuKey].map((item, itemIndex) =>
+      itemIndex === index ? { ...item, [field]: value } : item
+    )
+    persistSettings({ ...settings, [menuKey]: updatedMenu })
+  }
+
+  const addMenuItem = (menuKey: 'topMenu' | 'footerMenu' | 'mobileMenu') => {
+    if (!settings) return
+    const updatedMenu = [...settings[menuKey], { label: 'Yeni Bağlantı', href: '/' }]
+    persistSettings({ ...settings, [menuKey]: updatedMenu })
+  }
+
+  const updateSettingField = (path: keyof AdminSettings, value: AdminSettings[typeof path]) => {
+    if (!settings) return
+    persistSettings({ ...settings, [path]: value })
+  }
+
+  const handleLogin = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (credentials.email === 'sytkn@gmail.com' && credentials.password === 'sytknC.1031') {
+      setAuthenticated(true)
+      setAuthError(null)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('admin-session', 'active')
+      }
+    } else {
+      setAuthError('Kullanıcı adı veya şifre hatalı')
+    }
+  }
+
+  const handleLogout = () => {
+    setAuthenticated(false)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin-session')
+    }
+  }
 
   const toggleProductStatus = (id: string) => {
     setProducts((current) =>
@@ -214,6 +330,81 @@ export default function AdminPage() {
     )
   }
 
+  if (!authenticated) {
+    return (
+      <Layout
+        title="Admin Girişi | Baklava & Börek"
+        description="Canlı yönetim paneline erişmek için giriş yapın."
+        noindex
+      >
+        <div className="mx-auto flex min-h-[70vh] max-w-4xl items-center justify-center px-4 py-16">
+          <div className="grid gap-8 rounded-2xl bg-white p-8 shadow-lg ring-1 ring-gray-100 md:grid-cols-2">
+            <div className="space-y-4">
+              <p className="text-sm uppercase tracking-wide text-amber-600">Canlı Yönetim</p>
+              <h1 className="text-3xl font-bold text-gray-900">Baklava & Börek Admin</h1>
+              <p className="text-gray-600">
+                Ürün, sipariş, menü ve WhatsApp kanalını yönetmek için aşağıdaki bilgilerle giriş
+                yapın. Panel tüm verileri Supabase ve API katmanından canlı çeker.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden /> Gerçek zamanlı ürün & sipariş akışı
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-blue-500" aria-hidden /> Menü, alt menü ve mobil menü düzenleme
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-purple-500" aria-hidden /> WhatsApp numarası ve destek hatları
+                </li>
+              </ul>
+            </div>
+            <form className="space-y-4" onSubmit={handleLogin}>
+              <label className="space-y-1 text-sm">
+                <span className="text-gray-700">Admin E-Posta</span>
+                <input
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                  value={credentials.email}
+                  onChange={(event) => setCredentials({ ...credentials, email: event.target.value })}
+                  type="email"
+                  required
+                />
+              </label>
+              <label className="space-y-1 text-sm">
+                <span className="text-gray-700">Şifre</span>
+                <input
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                  value={credentials.password}
+                  onChange={(event) => setCredentials({ ...credentials, password: event.target.value })}
+                  type="password"
+                  required
+                />
+              </label>
+              {authError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{authError}</div>
+              )}
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+              >
+                Panele Gir
+              </button>
+              <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
+                <div className="flex items-center justify-between font-semibold text-gray-800">
+                  <span>Hazır Kullanıcı</span>
+                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                    Canlı
+                  </span>
+                </div>
+                <p>E-Posta: sytkn@gmail.com</p>
+                <p>Şifre: sytknC.1031</p>
+              </div>
+            </form>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
   return (
     <Layout
       title="Yönetim Paneli | Baklava & Börek"
@@ -239,8 +430,63 @@ export default function AdminPage() {
             <button className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-red-300 hover:text-red-600">
               Bakım Moduna Al
             </button>
+            <button
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-red-300 hover:text-red-600"
+              onClick={handleLogout}
+              type="button"
+            >
+              Çıkış
+            </button>
           </div>
         </header>
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-gray-800">Canlı Mod</div>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                {settings?.deployment.live ? 'Aktif' : 'Pasif'}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-gray-600">Supabase bağlantısı ve veri akışı izleniyor.</p>
+            <div className="mt-3 rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
+              <div>Sunucu: {connection.host}</div>
+              <div>Port: {connection.port}</div>
+              <div>Veritabanı: {connection.name}</div>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-gray-800">Dağıtım Durumu</div>
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+                {settings?.deployment.environment || 'Üretim'}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-gray-600">Son dağıtım: {settings?.deployment.lastDeploy || 'Bilinmiyor'}</p>
+            <div className="mt-3 flex items-center gap-2 text-xs text-gray-700">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden /> Çevrimiçi siparişler ve menü güncellemeleri
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-gray-800">WhatsApp & Destek</div>
+              <span className="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-700 ring-1 ring-purple-100">
+                {settings?.whatsapp || '+90 531 000 00 00'}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-gray-600">Mobil menü, üst menü ve destek kanallarını tek noktadan yönetin.</p>
+            <div className="mt-3 text-xs text-gray-700">
+              <div>Destek: {settings?.supportPhone}</div>
+              <div>E-Posta: {settings?.supportEmail}</div>
+            </div>
+          </div>
+        </section>
+
+        {settingsMessage && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {settingsMessage}
+          </div>
+        )}
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -254,6 +500,182 @@ export default function AdminPage() {
             Supabase verileri yükleniyor...
           </div>
         )}
+
+        <section className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Kanal & İletişim Ayarları</h2>
+                <p className="text-sm text-gray-600">WhatsApp, telefon, e-posta ve üst bilgilendirme metnini güncelleyin.</p>
+              </div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                Canlı
+              </span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="space-y-1 text-sm">
+                <span className="text-gray-700">WhatsApp Numarası</span>
+                <input
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                  value={settings?.whatsapp || ''}
+                  onChange={(event) => settings && updateSettingField('whatsapp', event.target.value)}
+                />
+              </label>
+              <label className="space-y-1 text-sm">
+                <span className="text-gray-700">Destek Telefonu</span>
+                <input
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                  value={settings?.supportPhone || ''}
+                  onChange={(event) => settings && updateSettingField('supportPhone', event.target.value)}
+                />
+              </label>
+              <label className="space-y-1 text-sm md:col-span-2">
+                <span className="text-gray-700">Destek E-Posta</span>
+                <input
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                  value={settings?.supportEmail || ''}
+                  onChange={(event) => settings && updateSettingField('supportEmail', event.target.value)}
+                />
+              </label>
+              <label className="space-y-1 text-sm md:col-span-2">
+                <span className="text-gray-700">Bilgilendirme Bandı</span>
+                <input
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                  value={settings?.infoBanner?.text || ''}
+                  onChange={(event) =>
+                    settings && settings.infoBanner && updateSettingField('infoBanner', { ...settings.infoBanner, text: event.target.value })
+                  }
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    id="bannerToggle"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    checked={!!settings?.infoBanner?.enabled}
+                    onChange={(event) =>
+                      settings &&
+                      settings.infoBanner &&
+                      updateSettingField('infoBanner', { ...settings.infoBanner, enabled: event.target.checked })
+                    }
+                  />
+                  <label htmlFor="bannerToggle" className="text-sm text-gray-700">
+                    Mobil ve üst barda göster
+                  </label>
+                </div>
+              </label>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="font-semibold text-gray-900">Canlı Önizleme</div>
+                <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 ring-1 ring-purple-100">
+                  Mobil / Üst Menü
+                </span>
+              </div>
+              <p className="mt-2 text-gray-700">{settings?.infoBanner?.text}</p>
+              <p className="text-xs text-gray-500">WhatsApp: {settings?.whatsapp} · Tel: {settings?.supportPhone}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Menü & Mobil Menü</h3>
+                <p className="text-sm text-gray-600">Üst, alt ve mobil menüleri canlı olarak düzenleyin.</p>
+              </div>
+              <button
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:border-amber-300 hover:text-amber-700"
+                onClick={() => addMenuItem('topMenu')}
+                type="button"
+              >
+                Üst Menü Bağlantısı
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="font-semibold text-gray-800">Üst Menü</div>
+              {settings?.topMenu.map((item, index) => (
+                <div key={item.label + index} className="grid grid-cols-2 gap-2">
+                  <input
+                    className="rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                    value={item.label}
+                    onChange={(event) => updateMenuItem('topMenu', index, 'label', event.target.value)}
+                  />
+                  <input
+                    className="rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                    value={item.href}
+                    onChange={(event) => updateMenuItem('topMenu', index, 'href', event.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between font-semibold text-gray-800">
+                <span>Alt Menü</span>
+                <button
+                  className="text-amber-700 hover:text-amber-800"
+                  type="button"
+                  onClick={() => addMenuItem('footerMenu')}
+                >
+                  Bağlantı Ekle
+                </button>
+              </div>
+              {settings?.footerMenu.map((item, index) => (
+                <div key={item.label + index} className="grid grid-cols-2 gap-2">
+                  <input
+                    className="rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                    value={item.label}
+                    onChange={(event) => updateMenuItem('footerMenu', index, 'label', event.target.value)}
+                  />
+                  <input
+                    className="rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                    value={item.href}
+                    onChange={(event) => updateMenuItem('footerMenu', index, 'href', event.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between font-semibold text-gray-800">
+                <span>Mobil Menü</span>
+                <button
+                  className="text-amber-700 hover:text-amber-800"
+                  type="button"
+                  onClick={() => addMenuItem('mobileMenu')}
+                >
+                  Kısa Yol Ekle
+                </button>
+              </div>
+              {settings?.mobileMenu.map((item, index) => (
+                <div key={item.label + index} className="grid grid-cols-2 gap-2">
+                  <input
+                    className="rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                    value={item.label}
+                    onChange={(event) => updateMenuItem('mobileMenu', index, 'label', event.target.value)}
+                  />
+                  <input
+                    className="rounded-lg border border-gray-200 px-3 py-2 focus:border-amber-500 focus:outline-none"
+                    value={item.href}
+                    onChange={(event) => updateMenuItem('mobileMenu', index, 'href', event.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
+              <div className="font-semibold text-gray-900">Sosyal & Destek</div>
+              <ul className="mt-2 space-y-1">
+                {settings?.socialLinks.map((link) => (
+                  <li key={link.platform} className="flex items-center justify-between">
+                    <span>{link.platform}</span>
+                    <span className="text-amber-700">{link.url}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
 
         <section className="grid gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 md:grid-cols-4">
           {[{ title: 'Günlük Ciro', value: '₺68.400', badge: '+12% Aylık', tone: 'emerald' },
