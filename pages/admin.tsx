@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Layout from '../components/Layout'
 
 interface ProductRow {
@@ -55,74 +55,118 @@ const toneStyles: Record<string, { text: string; bg: string; ring: string; bar: 
 }
 
 export default function AdminPage() {
-  const [products, setProducts] = useState<ProductRow[]>([
-    {
-      id: 'P-1001',
-      name: 'Fıstıklı Baklava 3.5kg',
-      category: 'Baklava',
-      price: 1650,
-      stock: 42,
-      status: 'active',
-      margin: 38,
-      featured: true
-    },
-    {
-      id: 'P-1002',
-      name: 'Cevizli Baklava 3.5kg',
-      category: 'Baklava',
-      price: 1350,
-      stock: 65,
-      status: 'active',
-      margin: 33,
-      featured: false
-    },
-    {
-      id: 'P-2001',
-      name: 'Su Böreği 2kg',
-      category: 'Börek',
-      price: 1100,
-      stock: 28,
-      status: 'draft',
-      margin: 41,
-      featured: false
-    }
-  ])
-
-  const [orders] = useState<OrderRow[]>([
-    {
-      id: '#ORD-5432',
-      customer: 'Ayşe Yılmaz',
-      total: 5400,
-      status: 'teslim edildi',
-      deliveryArea: 'Beşiktaş',
-      payment: 'kredi kartı'
-    },
-    {
-      id: '#ORD-5431',
-      customer: 'Efe Kara',
-      total: 3250,
-      status: 'yolda',
-      deliveryArea: 'Ataşehir',
-      payment: 'kapıda ödeme'
-    },
-    {
-      id: '#ORD-5428',
-      customer: 'Melisa Tan',
-      total: 2675,
-      status: 'hazırlanıyor',
-      deliveryArea: 'Bağcılar',
-      payment: 'havale'
-    }
-  ])
+  const [products, setProducts] = useState<ProductRow[]>([])
+  const [orders, setOrders] = useState<OrderRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const [connection, setConnection] = useState({
-    host: 'db.baklavaborek.internal',
+    host: 'db.gbupsyjaimsxfwtwvygb.supabase.co',
     port: '5432',
-    name: 'baklavaborek',
-    user: 'admin',
+    name: 'postgres',
+    user: 'postgres',
     password: '••••••••',
     provider: 'postgresql'
   })
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const [productsResponse, ordersResponse] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/orders')
+        ])
+
+        if (!productsResponse.ok || !ordersResponse.ok) {
+          throw new Error('API yanıtı alınamadı')
+        }
+
+        const productsData = await productsResponse.json()
+        const ordersData = await ordersResponse.json()
+
+        setProducts(
+          productsData.map((product: any) => ({
+            id: product.id,
+            name: product.name,
+            category: product.category || 'Genel',
+            price: product.price,
+            stock: product.stock || 0,
+            status: product.status || 'active',
+            margin: product.margin || 30,
+            featured: product.featured ?? false
+          }))
+        )
+
+        setOrders(ordersData)
+      } catch (err) {
+        console.error('Yönetim paneli verileri çekilirken hata oluştu.', err)
+        setError('Supabase bağlantısı kurulamadı, statik verilere dönüldü.')
+        setProducts([
+          {
+            id: 'P-1001',
+            name: 'Fıstıklı Baklava 3.5kg',
+            category: 'Baklava',
+            price: 1650,
+            stock: 42,
+            status: 'active',
+            margin: 38,
+            featured: true
+          },
+          {
+            id: 'P-1002',
+            name: 'Cevizli Baklava 3.5kg',
+            category: 'Baklava',
+            price: 1350,
+            stock: 65,
+            status: 'active',
+            margin: 33,
+            featured: false
+          },
+          {
+            id: 'P-2001',
+            name: 'Su Böreği 2kg',
+            category: 'Börek',
+            price: 1100,
+            stock: 28,
+            status: 'draft',
+            margin: 41,
+            featured: false
+          }
+        ])
+
+        setOrders([
+          {
+            id: '#ORD-5432',
+            customer: 'Ayşe Yılmaz',
+            total: 5400,
+            status: 'teslim edildi',
+            deliveryArea: 'Beşiktaş',
+            payment: 'kredi kartı'
+          },
+          {
+            id: '#ORD-5431',
+            customer: 'Efe Kara',
+            total: 3250,
+            status: 'yolda',
+            deliveryArea: 'Ataşehir',
+            payment: 'kapıda ödeme'
+          },
+          {
+            id: '#ORD-5428',
+            customer: 'Melisa Tan',
+            total: 2675,
+            status: 'hazırlanıyor',
+            deliveryArea: 'Bağcılar',
+            payment: 'havale'
+          }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadDashboard()
+  }, [])
 
   const profitability = useMemo(() => {
     const activeProducts = products.filter((product) => product.status === 'active')
@@ -197,6 +241,19 @@ export default function AdminPage() {
             </button>
           </div>
         </header>
+
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {loading && !error && (
+          <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <span className="h-3 w-3 animate-pulse rounded-full bg-blue-500" aria-hidden />
+            Supabase verileri yükleniyor...
+          </div>
+        )}
 
         <section className="grid gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 md:grid-cols-4">
           {[{ title: 'Günlük Ciro', value: '₺68.400', badge: '+12% Aylık', tone: 'emerald' },

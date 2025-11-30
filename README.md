@@ -153,6 +153,25 @@ npm run type-check
 NEXT_PUBLIC_SITE_URL=https://toptanbaklavaborek.com
 NEXT_PUBLIC_PHONE=+905378395801
 NEXT_PUBLIC_WHATSAPP=+905378395801
+
+# Supabase/PostgreSQL bağlantısı
+SUPABASE_URL=https://<proje-id>.supabase.co
+SUPABASE_ANON_KEY=anon_key
+SUPABASE_SERVICE_ROLE_KEY=service_role_key
+POSTGRES_URL_NON_POOLING=postgres://<user>:<pass>@aws-1-...:5432/postgres?sslmode=require
+```
+
+> Bu depoda `.env.local.example` dosyası, Supabase tarafından paylaşılan örnek değerlerle birlikte gelir. Vercel ve yerel ortamınıza
+> `.env.local` olarak kopyalayıp güncellediğinizden emin olun.
+
+### Supabase demo verilerini yükleme
+
+```bash
+# Supabase bağlantı bilgilerini .env.local içine ekleyin
+cp .env.local.example .env.local
+
+# Demo ürün ve siparişlerini Supabase/PostgreSQL'e gönderin
+npm run seed:supabase
 ```
 
 ## 📊 Performans

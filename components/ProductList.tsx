@@ -12,28 +12,32 @@ type Product = {
 }
 
 export default function ProductList() {
-  const [products, setProducts] = useState<Product[]>(productsData.slice(0, 5))
-  const [loading, setLoading] = useState(false)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fallback için API çağrısı (sadece hata durumunda)
   useEffect(() => {
-    if (products.length === 0) {
-      setLoading(true)
-      fetch('/api/products')
-        .then((r) => {
-          if (!r.ok) throw new Error('Ağ hatası')
-          return r.json()
-        })
-        .then((data) => {
-          setProducts(data.slice(0, 5))
-        })
-        .catch((err) => {
-          setError('Bağlantı sorunu yaşandı. Lütfen WhatsApp\'tan yazın.')
-        })
-        .finally(() => setLoading(false))
+    const loadProducts = async () => {
+      try {
+        const response = await fetch('/api/products')
+
+        if (!response.ok) {
+          throw new Error('Ürünler alınamadı')
+        }
+
+        const data: Product[] = await response.json()
+        setProducts(data.slice(0, 5))
+      } catch (err) {
+        console.error('API üzerinden ürünler çekilirken hata oluştu, statik veri kullanılacak.', err)
+        setProducts(productsData.slice(0, 5))
+        setError('Bağlantı sorunu yaşandı. Lütfen WhatsApp\'tan yazın.')
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [products.length])
+
+    loadProducts()
+  }, [])
 
   return (
     <section id="products" className="py-8 bg-gradient-to-b from-white to-amber-50">
@@ -55,33 +59,22 @@ export default function ProductList() {
         )}
         
         {error && (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-red-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-              <span className="text-4xl">⚠️</span>
+          <div className="text-center py-6">
+            <div className="w-20 h-20 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <span className="text-3xl">⚠️</span>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Bağlantı Sorunu</h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">{error}</p>
-            <div className="space-y-3">
-              <button 
-                onClick={() => window.location.reload()} 
-                className="bg-amber-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-amber-700 transition-colors"
-              >
-                Tekrar Dene
-              </button>
-              <div className="text-sm text-gray-500">
-                veya
-              </div>
-              <button 
-                onClick={() => window.open('https://wa.me/905378395801?text=Merhaba. Ürünleriniz hakkında bilgi almak istiyorum.', '_blank')}
-                className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors"
-              >
-                WhatsApp'tan Yazın
-              </button>
-            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Bağlantı Sorunu</h3>
+            <p className="text-gray-600 mb-4 max-w-md mx-auto">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-amber-700 transition-colors"
+            >
+              Yenile ve Tekrar Dene
+            </button>
           </div>
         )}
 
-        {!loading && !error && (
+        {!loading && products.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
             {products.map((p) => (
               <ProductCard

@@ -1,9 +1,38 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import products from '../../data/products.json'
+import productsFallback from '../../data/products.json'
+import { getSupabaseServiceRoleClient } from '../../utils/supabaseClient'
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+async function fetchProductsFromSupabase() {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('id, name, description, price, image')
+    .order('id', { ascending: true })
+
+  if (error) throw error
+
+  return data
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' })
+  }
+
+  let products = productsFallback
+
+  try {
+    const supabaseProducts = await fetchProductsFromSupabase()
+
+    if (supabaseProducts && supabaseProducts.length > 0) {
+      products = supabaseProducts.map((product) => ({
+        ...product,
+        price: typeof product.price === 'number' ? product.price : Number(product.price)
+      }))
+    }
+  } catch (error) {
+    console.error('Supabase feed verisi çekilirken hata oluştu, statik veri kullanılacak:', error)
   }
 
   // Google Merchant Center için XML feed oluştur
@@ -13,13 +42,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     <title>Toptan Baklava & Börek</title>
     <link>https://toptanbaklavaborek.com</link>
     <description>Günlük taze baklava ve börek üretimi</description>
-    ${products.map(product => `
+    ${products
+      .map(
+        (product) => `
     <item>
       <g:id>${product.id}</g:id>
       <g:title>${product.name}</g:title>
       <g:description>${product.description}</g:description>
       <g:link>https://toptanbaklavaborek.com/#products</g:link>
-      <g:image_link>https://toptanbaklavaborek.com/images/${product.image}</g:image_link>
+      <g:image_link>https://toptanbaklavaborek.com${product.image?.startsWith('/') ? product.image : `/images/${product.image}`}</g:image_link>
       <g:availability>in stock</g:availability>
       <g:price>${product.price} TRY</g:price>
       <g:brand>Toptan Baklava & Börek</g:brand>
@@ -32,12 +63,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         <g:service>Standard</g:service>
         <g:price>0 TRY</g:price>
       </g:shipping>
-    </item>
-    `).join('')}
+    </item>`
+      )
+      .join('')}
   </channel>
 </rss>`
 
   res.setHeader('Content-Type', 'application/xml')
-  res.setHeader('Cache-Control', 'public, max-age=3600') // 1 saat cache
+  res.setHeader('Cache-Control', 'public, max-age=900, s-maxage=1800')
   res.status(200).send(xml)
 }
