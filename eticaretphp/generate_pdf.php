@@ -51,6 +51,15 @@ function resolve_image_path(?string $imagePath): ?string {
 
 function prepare_pdf_image(string $path): ?array {
     $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    $fileSize = filesize($path);
+    $maxBytes = 2 * 1024 * 1024;
+    $forceResize = $fileSize !== false && $fileSize > $maxBytes;
+    if ($forceResize) {
+        $canProcess = function_exists('imagecreatetruecolor');
+        if (!$canProcess) {
+            return null;
+        }
+    }
     $imageInfo = @getimagesize($path);
     if ($imageInfo === false) {
         return [$path, null];
@@ -64,6 +73,9 @@ function prepare_pdf_image(string $path): ?array {
 
     $canProcess = function_exists('imagecreatetruecolor');
     if (!$canProcess) {
+        if ($fileSize !== false && $fileSize > $maxBytes) {
+            return null;
+        }
         return [$path, null];
     }
 
@@ -104,7 +116,7 @@ function prepare_pdf_image(string $path): ?array {
 
     $needsResize = $scale < 1.0;
     $needsConversion = $type === IMAGETYPE_WEBP;
-    if (!$needsResize && !$needsConversion) {
+    if (!$needsResize && !$needsConversion && !$forceResize) {
         imagedestroy($image);
         return [$path, null];
     }
