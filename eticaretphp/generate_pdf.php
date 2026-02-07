@@ -25,6 +25,46 @@ function pdf_text(string $text): string {
     return iconv('UTF-8', 'ISO-8859-9//TRANSLIT', $text);
 }
 
+function resolve_image_path(?string $imagePath): ?string {
+    if ($imagePath === null || $imagePath === '') {
+        return null;
+    }
+
+    $isAbsolute = $imagePath[0] === '/' || preg_match('/^[A-Za-z]:\\\\/', $imagePath) === 1;
+    $path = $isAbsolute ? $imagePath : __DIR__ . '/' . ltrim($imagePath, '/');
+
+    return file_exists($path) ? $path : null;
+}
+
+function prepare_pdf_image(string $path): ?array {
+    $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    if ($extension !== 'webp') {
+        return [$path, null];
+    }
+
+    if (!function_exists('imagecreatefromwebp')) {
+        return null;
+    }
+
+    $image = imagecreatefromwebp($path);
+    if ($image === false) {
+        return null;
+    }
+
+    $tempFile = tempnam(sys_get_temp_dir(), 'fpdf_');
+    if ($tempFile === false) {
+        imagedestroy($image);
+        return null;
+    }
+
+    $pngFile = $tempFile . '.png';
+    rename($tempFile, $pngFile);
+    imagepng($image, $pngFile);
+    imagedestroy($image);
+
+    return [$pngFile, $pngFile];
+}
+
 $labels = load_labels();
 $config = load_config();
 
@@ -77,8 +117,14 @@ foreach ($labels as $index => $label) {
     $pdf->SetXY($x + 10, $y + 24);
 
     if (!empty($config['show_local'])) {
-        if (!empty($config['image_path']) && file_exists(__DIR__ . '/' . $config['image_path'])) {
-            $pdf->Image(__DIR__ . '/' . $config['image_path'], $x + 6, $y + 22, 10, 10);
+        $imagePath = resolve_image_path($config['image_path'] ?? null);
+        $preparedImage = $imagePath ? prepare_pdf_image($imagePath) : null;
+        if ($preparedImage) {
+            [$resolvedPath, $tempPath] = $preparedImage;
+            $pdf->Image($resolvedPath, $x + 6, $y + 22, 10, 10);
+            if ($tempPath) {
+                unlink($tempPath);
+            }
         } else {
             $pdf->SetDrawColor(215, 24, 24);
             $pdf->SetTextColor(215, 24, 24);
