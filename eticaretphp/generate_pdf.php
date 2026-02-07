@@ -156,9 +156,6 @@ if (!$labels) {
     exit;
 }
 
-$pdf = new PDF_Code128('P', 'mm', 'A4');
-$pdf->SetAutoPageBreak(false);
-
 $labelWidth = 97.0;
 $labelHeight = 32.0;
 $cols = 2;
@@ -179,61 +176,132 @@ if (!empty($config['show_local'])) {
     }
 }
 
-foreach ($labels as $index => $label) {
-    $pos = $index % $perPage;
-    if ($pos === 0) {
-        $pdf->AddPage();
+function render_labels(PDF_Code128 $pdf, array $labels, array $config, ?string $logoPath, int $perPage, int $cols, float $labelWidth, float $labelHeight, float $marginX, float $marginY): void {
+    foreach ($labels as $index => $label) {
+        $pos = $index % $perPage;
+        if ($pos === 0) {
+            $pdf->AddPage();
+        }
+
+        $row = intdiv($pos, $cols);
+        $col = $pos % $cols;
+        $x = $marginX + ($col * $labelWidth);
+        $y = $marginY + ($row * $labelHeight);
+
+        $pdf->SetDrawColor(20, 20, 20);
+        $pdf->Rect($x, $y, $labelWidth, $labelHeight);
+
+        $pdf->SetFillColor(215, 24, 24);
+        $pdf->Rect($x, $y, $labelWidth, 8, 'F');
+
+        $pdf->SetFont('Helvetica', 'B', 12);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetXY($x, $y + 1.2);
+        $pdf->Cell($labelWidth, 6, pdf_text(pdf_upper($label['name'] ?? '')), 0, 0, 'C');
+
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetFont('Helvetica', 'B', 18);
+        $pdf->SetXY($x, $y + 10.5);
+        $price = trim($label['price'] ?? '');
+        $priceText = $price !== '' ? $price . ' TL' : 'TL';
+        $pdf->Cell($labelWidth, 8, pdf_text($priceText), 0, 0, 'C');
+
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->SetXY($x + 10, $y + 24);
+
+        if (!empty($config['show_local'])) {
+            if ($logoPath) {
+                $pdf->Image($logoPath, $x + 6, $y + 22, 10, 10);
+            } else {
+                $pdf->SetDrawColor(215, 24, 24);
+                $pdf->SetTextColor(215, 24, 24);
+                $pdf->Rect($x + 6, $y + 22, 10, 10);
+                $pdf->SetXY($x + 6, $y + 25.5);
+                $pdf->Cell(10, 3, pdf_text('YERLI'), 0, 2, 'C');
+                $pdf->Cell(10, 3, pdf_text('URETIM'), 0, 0, 'C');
+                $pdf->SetTextColor(0, 0, 0);
+            }
+        }
+
+        $barcode = trim((string)($label['barcode'] ?? ''));
+        if ($barcode !== '') {
+            $pdf->Code128($x + 22, $y + 23, $barcode, 50, 6);
+        }
+
+        $pdf->SetFont('Helvetica', 'B', 8);
+        $pdf->SetXY($x + 22, $y + 25);
+        $pdf->Cell($labelWidth - 28, 4, pdf_text($barcode), 0, 0, 'R');
     }
+}
 
-    $row = intdiv($pos, $cols);
-    $col = $pos % $cols;
-    $x = $marginX + ($col * $labelWidth);
-    $y = $marginY + ($row * $labelHeight);
-
-    $pdf->SetDrawColor(20, 20, 20);
-    $pdf->Rect($x, $y, $labelWidth, $labelHeight);
-
-    $pdf->SetFillColor(215, 24, 24);
-    $pdf->Rect($x, $y, $labelWidth, 8, 'F');
-
-    $pdf->SetFont('Helvetica', 'B', 12);
-    $pdf->SetTextColor(255, 255, 255);
-    $pdf->SetXY($x, $y + 1.2);
-    $pdf->Cell($labelWidth, 6, pdf_text(pdf_upper($label['name'] ?? '')), 0, 0, 'C');
-
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->SetFont('Helvetica', 'B', 18);
-    $pdf->SetXY($x, $y + 10.5);
-    $price = trim($label['price'] ?? '');
-    $priceText = $price !== '' ? $price . ' TL' : 'TL';
-    $pdf->Cell($labelWidth, 8, pdf_text($priceText), 0, 0, 'C');
-
-    $pdf->SetFont('Helvetica', '', 8);
-    $pdf->SetXY($x + 10, $y + 24);
-
-    if (!empty($config['show_local'])) {
-        if ($logoPath) {
-            $pdf->Image($logoPath, $x + 6, $y + 22, 10, 10);
+function cleanup_temp_dir(string $dir): void {
+    if (!is_dir($dir)) {
+        return;
+    }
+    $items = scandir($dir);
+    if ($items === false) {
+        return;
+    }
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+        $path = $dir . '/' . $item;
+        if (is_dir($path)) {
+            cleanup_temp_dir($path);
         } else {
-            $pdf->SetDrawColor(215, 24, 24);
-            $pdf->SetTextColor(215, 24, 24);
-            $pdf->Rect($x + 6, $y + 22, 10, 10);
-            $pdf->SetXY($x + 6, $y + 25.5);
-            $pdf->Cell(10, 3, pdf_text('YERLI'), 0, 2, 'C');
-            $pdf->Cell(10, 3, pdf_text('URETIM'), 0, 0, 'C');
-            $pdf->SetTextColor(0, 0, 0);
+            @unlink($path);
         }
     }
+    @rmdir($dir);
+}
 
-    $barcode = trim((string)($label['barcode'] ?? ''));
-    if ($barcode !== '') {
-        $pdf->Code128($x + 22, $y + 23, $barcode, 50, 6);
+$maxPagesPerPdf = 30;
+$maxLabelsPerPdf = $maxPagesPerPdf * $perPage;
+
+if (count($labels) > $maxLabelsPerPdf) {
+    $tempDir = sys_get_temp_dir() . '/etiket_pdf_' . bin2hex(random_bytes(8));
+    mkdir($tempDir, 0700, true);
+    $zipPath = $tempDir . '/etiketler.zip';
+
+    $zip = new ZipArchive();
+    if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
+        cleanup_temp_dir($tempDir);
+        header('Location: index.php');
+        exit;
     }
 
-    $pdf->SetFont('Helvetica', 'B', 8);
-    $pdf->SetXY($x + 22, $y + 25);
-    $pdf->Cell($labelWidth - 28, 4, pdf_text($barcode), 0, 0, 'R');
+    $chunks = array_chunk($labels, $maxLabelsPerPdf);
+    foreach ($chunks as $chunkIndex => $chunkLabels) {
+        $pdf = new PDF_Code128('P', 'mm', 'A4');
+        $pdf->SetAutoPageBreak(false);
+        render_labels($pdf, $chunkLabels, $config, $logoPath, $perPage, $cols, $labelWidth, $labelHeight, $marginX, $marginY);
+        $fileName = sprintf('etiketler-%02d.pdf', $chunkIndex + 1);
+        $filePath = $tempDir . '/' . $fileName;
+        $pdf->Output($filePath, 'F');
+        $zip->addFile($filePath, $fileName);
+        unset($pdf);
+        if (function_exists('gc_collect_cycles')) {
+            gc_collect_cycles();
+        }
+    }
+    $zip->close();
+
+    if ($logoTempPath) {
+        unlink($logoTempPath);
+    }
+
+    register_shutdown_function('cleanup_temp_dir', $tempDir);
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="etiketler.zip"');
+    header('Content-Length: ' . filesize($zipPath));
+    readfile($zipPath);
+    exit;
 }
+
+$pdf = new PDF_Code128('P', 'mm', 'A4');
+$pdf->SetAutoPageBreak(false);
+render_labels($pdf, $labels, $config, $logoPath, $perPage, $cols, $labelWidth, $labelHeight, $marginX, $marginY);
 
 if ($logoTempPath) {
     unlink($logoTempPath);
