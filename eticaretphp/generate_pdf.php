@@ -51,15 +51,28 @@ function prepare_pdf_image(string $path): ?array {
         return null;
     }
 
+    $width = imagesx($image);
+    $height = imagesy($image);
+    $canvas = imagecreatetruecolor($width, $height);
+    if ($canvas === false) {
+        imagedestroy($image);
+        return null;
+    }
+    $white = imagecolorallocate($canvas, 255, 255, 255);
+    imagefilledrectangle($canvas, 0, 0, $width, $height, $white);
+    imagecopy($canvas, $image, 0, 0, 0, 0, $width, $height);
+
     $tempFile = tempnam(sys_get_temp_dir(), 'fpdf_');
     if ($tempFile === false) {
+        imagedestroy($canvas);
         imagedestroy($image);
         return null;
     }
 
     $pngFile = $tempFile . '.png';
     rename($tempFile, $pngFile);
-    imagepng($image, $pngFile);
+    imagepng($canvas, $pngFile);
+    imagedestroy($canvas);
     imagedestroy($image);
 
     return [$pngFile, $pngFile];
