@@ -1249,7 +1249,17 @@ class FPDF
 		$info['h']=$h;
 		$info['bpc']=$bpc;
 		$info['f']='FlateDecode';
-		$info['data']=gzuncompress($data);
+		$channels=($ct==2 ? 3 : 1);
+		$rowBytes=(int)ceil(($w*$channels*$bpc)/8);
+		$expectedSize=($rowBytes+1)*$h;
+		$maxDecodedSize=50*1024*1024;
+		if($expectedSize>$maxDecodedSize)
+			$this->Error('PNG çok büyük, lütfen küçültülmüş/kompres edilmiş sürümünü yükleyin');
+		$gzuncompressParams=(new ReflectionFunction('gzuncompress'))->getNumberOfParameters();
+		if($gzuncompressParams>=2)
+			$info['data']=gzuncompress($data,$expectedSize);
+		else
+			$info['data']=gzuncompress($data);
 		if($info['data']===false)
 			$info['data']=$data;
 		return $info;
