@@ -22,7 +22,11 @@ function load_config(): array {
 }
 
 function pdf_text(string $text): string {
-    return iconv('UTF-8', 'ISO-8859-9//TRANSLIT', $text);
+    $converted = iconv('UTF-8', 'ISO-8859-9//TRANSLIT', $text);
+    if ($converted === false) {
+        return $text;
+    }
+    return $converted;
 }
 
 function resolve_image_path(?string $imagePath): ?string {
