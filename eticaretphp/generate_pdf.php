@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/lib/fpdf.php';
+require __DIR__ . '/lib/code128.php';
 
 define('DATA_DIR', __DIR__ . '/data');
 define('LABELS_FILE', DATA_DIR . '/labels.json');
@@ -144,7 +144,7 @@ if (!$labels) {
     exit;
 }
 
-$pdf = new FPDF('P', 'mm', 'A4');
+$pdf = new PDF_Code128('P', 'mm', 'A4');
 $pdf->SetAutoPageBreak(false);
 
 $labelWidth = 97.0;
@@ -154,6 +154,18 @@ $rows = 9;
 $perPage = $cols * $rows;
 $marginX = (210 - ($cols * $labelWidth)) / 2;
 $marginY = (297 - ($rows * $labelHeight)) / 2;
+
+$logoPath = null;
+$logoTempPath = null;
+if (!empty($config['show_local'])) {
+    $resolvedPath = resolve_image_path($config['image_path'] ?? null);
+    if ($resolvedPath) {
+        $preparedImage = prepare_pdf_image($resolvedPath);
+        if ($preparedImage) {
+            [$logoPath, $logoTempPath] = $preparedImage;
+        }
+    }
+}
 
 foreach ($labels as $index => $label) {
     $pos = $index % $perPage;
@@ -188,14 +200,8 @@ foreach ($labels as $index => $label) {
     $pdf->SetXY($x + 10, $y + 24);
 
     if (!empty($config['show_local'])) {
-        $imagePath = resolve_image_path($config['image_path'] ?? null);
-        $preparedImage = $imagePath ? prepare_pdf_image($imagePath) : null;
-        if ($preparedImage) {
-            [$resolvedPath, $tempPath] = $preparedImage;
-            $pdf->Image($resolvedPath, $x + 6, $y + 22, 10, 10);
-            if ($tempPath) {
-                unlink($tempPath);
-            }
+        if ($logoPath) {
+            $pdf->Image($logoPath, $x + 6, $y + 22, 10, 10);
         } else {
             $pdf->SetDrawColor(215, 24, 24);
             $pdf->SetTextColor(215, 24, 24);
@@ -207,9 +213,18 @@ foreach ($labels as $index => $label) {
         }
     }
 
+    $barcode = trim((string)($label['barcode'] ?? ''));
+    if ($barcode !== '') {
+        $pdf->Code128($x + 22, $y + 23, $barcode, 50, 6);
+    }
+
     $pdf->SetFont('Helvetica', 'B', 8);
     $pdf->SetXY($x + 22, $y + 25);
-    $pdf->Cell($labelWidth - 28, 4, pdf_text($label['barcode'] ?? ''), 0, 0, 'R');
+    $pdf->Cell($labelWidth - 28, 4, pdf_text($barcode), 0, 0, 'R');
+}
+
+if ($logoTempPath) {
+    unlink($logoTempPath);
 }
 
 $pdf->Output('etiketler.pdf', 'I');
