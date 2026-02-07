@@ -67,12 +67,21 @@ function prepare_pdf_image(string $path): ?array {
         return [$path, null];
     }
 
-    $image = match ($type) {
-        IMAGETYPE_JPEG => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($path) : false,
-        IMAGETYPE_PNG => function_exists('imagecreatefrompng') ? @imagecreatefrompng($path) : false,
-        IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
-        default => false,
-    };
+    $image = false;
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            $image = function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($path) : false;
+            break;
+        case IMAGETYPE_PNG:
+            $image = function_exists('imagecreatefrompng') ? @imagecreatefrompng($path) : false;
+            break;
+        case IMAGETYPE_WEBP:
+            $image = function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false;
+            break;
+        default:
+            $image = false;
+            break;
+    }
 
     if ($image === false) {
         return [$path, null];
