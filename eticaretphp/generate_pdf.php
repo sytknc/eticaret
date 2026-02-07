@@ -51,35 +51,71 @@ function resolve_image_path(?string $imagePath): ?string {
 
 function prepare_pdf_image(string $path): ?array {
     $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-    if ($extension !== 'webp') {
+    $imageInfo = @getimagesize($path);
+    if ($imageInfo === false) {
         return [$path, null];
     }
 
-    if (!function_exists('imagecreatefromwebp')) {
-        return null;
+    $type = $imageInfo[2] ?? null;
+    $supportedTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP];
+    if (!in_array($type, $supportedTypes, true)) {
+        return [$path, null];
     }
 
-    $image = imagecreatefromwebp($path);
+    $canProcess = function_exists('imagecreatetruecolor');
+    if (!$canProcess) {
+        return [$path, null];
+    }
+
+    $image = match ($type) {
+        IMAGETYPE_JPEG => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($path) : false,
+        IMAGETYPE_PNG => function_exists('imagecreatefrompng') ? @imagecreatefrompng($path) : false,
+        IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
+        default => false,
+    };
+
     if ($image === false) {
-        return null;
+        return [$path, null];
     }
 
     $width = imagesx($image);
     $height = imagesy($image);
-    $canvas = imagecreatetruecolor($width, $height);
+
+    $maxDimension = 600;
+    $maxPixels = 600 * 600;
+    $scale = 1.0;
+    $largestSide = max($width, $height);
+    if ($largestSide > $maxDimension) {
+        $scale = min($scale, $maxDimension / $largestSide);
+    }
+    $pixelCount = $width * $height;
+    if ($pixelCount > $maxPixels) {
+        $scale = min($scale, sqrt($maxPixels / $pixelCount));
+    }
+
+    $needsResize = $scale < 1.0;
+    $needsConversion = $type === IMAGETYPE_WEBP;
+    if (!$needsResize && !$needsConversion) {
+        imagedestroy($image);
+        return [$path, null];
+    }
+
+    $targetWidth = max(1, (int)round($width * $scale));
+    $targetHeight = max(1, (int)round($height * $scale));
+    $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
     if ($canvas === false) {
         imagedestroy($image);
-        return null;
+        return [$path, null];
     }
     $white = imagecolorallocate($canvas, 255, 255, 255);
-    imagefilledrectangle($canvas, 0, 0, $width, $height, $white);
-    imagecopy($canvas, $image, 0, 0, 0, 0, $width, $height);
+    imagefilledrectangle($canvas, 0, 0, $targetWidth, $targetHeight, $white);
+    imagecopyresampled($canvas, $image, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
 
     $tempFile = tempnam(sys_get_temp_dir(), 'fpdf_');
     if ($tempFile === false) {
         imagedestroy($canvas);
         imagedestroy($image);
-        return null;
+        return [$path, null];
     }
 
     $pngFile = $tempFile . '.png';
