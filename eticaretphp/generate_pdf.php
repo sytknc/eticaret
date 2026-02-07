@@ -22,11 +22,20 @@ function load_config(): array {
 }
 
 function pdf_text(string $text): string {
-    $converted = iconv('UTF-8', 'ISO-8859-9//TRANSLIT', $text);
-    if ($converted === false) {
-        return $text;
+    if (function_exists('iconv')) {
+        $converted = iconv('UTF-8', 'ISO-8859-9//TRANSLIT', $text);
+        if ($converted !== false) {
+            return $converted;
+        }
     }
-    return $converted;
+    return $text;
+}
+
+function pdf_upper(string $text): string {
+    if (function_exists('mb_strtoupper')) {
+        return mb_strtoupper($text, 'UTF-8');
+    }
+    return strtoupper($text);
 }
 
 function resolve_image_path(?string $imagePath): ?string {
@@ -121,7 +130,7 @@ foreach ($labels as $index => $label) {
     $pdf->SetFont('Helvetica', 'B', 12);
     $pdf->SetTextColor(255, 255, 255);
     $pdf->SetXY($x, $y + 1.2);
-    $pdf->Cell($labelWidth, 6, pdf_text(mb_strtoupper($label['name'] ?? '', 'UTF-8')), 0, 0, 'C');
+    $pdf->Cell($labelWidth, 6, pdf_text(pdf_upper($label['name'] ?? '')), 0, 0, 'C');
 
     $pdf->SetTextColor(0, 0, 0);
     $pdf->SetFont('Helvetica', 'B', 18);
